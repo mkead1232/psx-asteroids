@@ -3,9 +3,8 @@ TYPE = ps-exe
 
 SRCS = \
 third_party/nugget/common/crt0/crt0.s \
-main.c \
-my_image.s \
-ak-fnt.s
+src/main.c \
+assets/my_image.s
 
 CPPFLAGS += -Ithird_party/psyq-iwyu/include
 LDFLAGS += -Lthird_party/psyq/lib

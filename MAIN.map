@@ -1,9 +1,9 @@
 Archive member included to satisfy reference by file (symbol)
 
 third_party/psyq/lib\libapi.a(a91.o)
-                              main.o (ChangeClearPAD)
+                              src/main.o (ChangeClearPAD)
 third_party/psyq/lib\libapi.a(pad.o)
-                              main.o (InitPAD)
+                              src/main.o (InitPAD)
 third_party/psyq/lib\libapi.a(patch.o)
                               third_party/psyq/lib\libapi.a(pad.o) (_patch_pad)
 third_party/psyq/lib\libapi.a(a18.o)
@@ -25,11 +25,11 @@ third_party/psyq/lib\libapi.a(l02.o)
 third_party/psyq/lib\libapi.a(l03.o)
                               third_party/psyq/lib\libapi.a(pad.o) (SysDeqIntRP)
 third_party/psyq/lib\libc.a(c42.o)
-                              main.o (memcpy)
+                              src/main.o (memcpy)
 third_party/psyq/lib\libc.a(c47.o)
-                              main.o (rand)
+                              src/main.o (rand)
 third_party/psyq/lib\libetc.a(vsync.o)
-                              main.o (VSync)
+                              src/main.o (VSync)
 third_party/psyq/lib\libetc.a(intr_vb.o)
                               third_party/psyq/lib\libetc.a(vsync.o) (Vcount)
 third_party/psyq/lib\libetc.a(intr.o)
@@ -37,11 +37,11 @@ third_party/psyq/lib\libetc.a(intr.o)
 third_party/psyq/lib\libetc.a(intr_dma.o)
                               third_party/psyq/lib\libetc.a(intr.o) (startIntrDMA)
 third_party/psyq/lib\libgpu.a(e03.o)
-                              main.o (SetDefDrawEnv)
+                              src/main.o (SetDefDrawEnv)
 third_party/psyq/lib\libgpu.a(e04.o)
-                              main.o (SetDefDispEnv)
+                              src/main.o (SetDefDispEnv)
 third_party/psyq/lib\libgpu.a(font.o)
-                              main.o (FntFlush)
+                              src/main.o (FntFlush)
 third_party/psyq/lib\libgpu.a(p06.o)
                               third_party/psyq/lib\libgpu.a(font.o) (AddPrim)
 third_party/psyq/lib\libgpu.a(p09.o)
@@ -55,9 +55,9 @@ third_party/psyq/lib\libgpu.a(p26.o)
 third_party/psyq/lib\libgpu.a(p41.o)
                               third_party/psyq/lib\libgpu.a(font.o) (SetDrawMode)
 third_party/psyq/lib\libgpu.a(sys.o)
-                              main.o (LoadImage)
+                              src/main.o (LoadImage)
 third_party/psyq/lib\libgpu.a(t00.o)
-                              main.o (ReadTIM)
+                              src/main.o (ReadTIM)
 third_party/psyq/lib\libgpu.a(e00.o)
                               third_party/psyq/lib\libgpu.a(font.o) (LoadTPage)
 third_party/psyq/lib\libgpu.a(e02.o)
@@ -67,9 +67,9 @@ third_party/psyq/lib\libgpu.a(p00.o)
 third_party/psyq/lib\libgpu.a(p01.o)
                               third_party/psyq/lib\libgpu.a(e02.o) (GetClut)
 third_party/psyq/lib\libgte.a(cor_02.o)
-                              main.o (ccos)
+                              src/main.o (ccos)
 third_party/psyq/lib\libgte.a(cor_03.o)
-                              main.o (csin)
+                              src/main.o (csin)
 third_party/psyq/lib\libgte.a(cor_01.o)
                               third_party/psyq/lib\libgte.a(cor_02.o) (csincos)
 third_party/psyq/lib\libapi.a(a23.o)
@@ -103,24 +103,19 @@ Discarded input sections
  .bss           0x00000000        0x0 third_party/nugget/common/crt0/crt0.o
  .MIPS.abiflags
                 0x00000000       0x18 third_party/nugget/common/crt0/crt0.o
- .text          0x00000000        0x0 main.o
- .bss           0x00000000        0x0 main.o
- .reginfo       0x00000000       0x18 main.o
+ .text          0x00000000        0x0 src/main.o
+ .bss           0x00000000        0x0 src/main.o
+ .reginfo       0x00000000       0x18 src/main.o
  .MIPS.abiflags
-                0x00000000       0x18 main.o
- .pdr           0x00000000      0x100 main.o
+                0x00000000       0x18 src/main.o
+ .pdr           0x00000000      0x100 src/main.o
  .text.checkCollision
-                0x00000000       0x54 main.o
- .text          0x00000000        0x0 my_image.o
- .bss           0x00000000        0x0 my_image.o
- .reginfo       0x00000000       0x18 my_image.o
+                0x00000000       0x54 src/main.o
+ .text          0x00000000        0x0 assets/my_image.o
+ .bss           0x00000000        0x0 assets/my_image.o
+ .reginfo       0x00000000       0x18 assets/my_image.o
  .MIPS.abiflags
-                0x00000000       0x18 my_image.o
- .text          0x00000000        0x0 ak-fnt.o
- .bss           0x00000000        0x0 ak-fnt.o
- .reginfo       0x00000000       0x18 ak-fnt.o
- .MIPS.abiflags
-                0x00000000       0x18 ak-fnt.o
+                0x00000000       0x18 assets/my_image.o
 
 Memory Configuration
 
@@ -133,9 +128,8 @@ dcache           0x1f800000         0x00000400
 Linker script and memory map
 
 LOAD third_party/nugget/common/crt0/crt0.o
-LOAD main.o
-LOAD my_image.o
-LOAD ak-fnt.o
+LOAD src/main.o
+LOAD assets/my_image.o
 START GROUP
 LOAD third_party/psyq/lib\libapi.a
 LOAD third_party/psyq/lib\libc.a
@@ -160,7 +154,7 @@ LOAD third_party/psyq/lib\libsnd.a
 LOAD third_party/psyq/lib\libspu.a
 LOAD third_party/psyq/lib\libtap.a
 END GROUP
-                0x80030850                        __heap_base = __bss_end
+                0x80030050                        __heap_base = __bss_end
                 0x00200000                        RAM_SIZE = DEFINED (RAM_SIZE)?RAM_SIZE:0x200000
                 0x80010000                        TLOAD_ADDR = DEFINED (TLOAD_ADDR)?TLOAD_ADDR:0x80010000
                 0x80200000                        __ram_top = (ORIGIN (ram) + LENGTH (ram))
@@ -169,7 +163,7 @@ END GROUP
                 0x1f800400                        __dcache_top = (ORIGIN (dcache) + LENGTH (dcache))
                 0x00016050                        __bss_len = (__bss_end - __bss_start)
                 0x00006790                        __ftext_len = (__ftext_end - __ftext_start)
-                0x00004070                        __fdata_len = (__fdata_end - __fdata_start)
+                0x00003870                        __fdata_len = (__fdata_end - __fdata_start)
                 0x80200000                        __stack_start = (ORIGIN (ram) + LENGTH (ram))
 
 .PSX_EXE_Header
@@ -187,7 +181,7 @@ END GROUP
                 0x8000f810        0x4 LONG 0x80010000 ABSOLUTE (_start)
                 0x8000f814        0x4 LONG 0x0
                 0x8000f818        0x4 LONG 0x80010000 TLOAD_ADDR
-                0x8000f81c        0x4 LONG 0xa800 (__ftext_len + __fdata_len)
+                0x8000f81c        0x4 LONG 0xa000 (__ftext_len + __fdata_len)
                 0x8000f820        0x4 LONG 0x0
                 0x8000f824        0x4 LONG 0x0
                 0x8000f828        0x4 LONG 0x0
@@ -208,25 +202,25 @@ END GROUP
  *(.text.exit .text.exit.*)
  *(.text.startup .text.startup.*)
  .text.startup.main
-                0x80010064      0x934 main.o
+                0x80010064      0x934 src/main.o
                 0x80010064                main
  *(.text.hot .text.hot.*)
  *(.text .stub .text.* .gnu.linkonce.t.*)
- .text.display  0x80010998      0x16c main.o
+ .text.display  0x80010998      0x16c src/main.o
                 0x80010998                display
  .text.LoadTexture
-                0x80010b04       0x7c main.o
+                0x80010b04       0x7c src/main.o
                 0x80010b04                LoadTexture
  .text.loadstuff
-                0x80010b80       0xa8 main.o
+                0x80010b80       0xa8 src/main.o
                 0x80010b80                loadstuff
- .text.init     0x80010c28      0x198 main.o
+ .text.init     0x80010c28      0x198 src/main.o
                 0x80010c28                init
  .text.sortRotSprite
-                0x80010dc0      0x2c0 main.o
+                0x80010dc0      0x2c0 src/main.o
                 0x80010dc0                sortRotSprite
  .text.spawnAsteroid
-                0x80011080      0x214 main.o
+                0x80011080      0x214 src/main.o
                 0x80011080                spawnAsteroid
  *fill*         0x80011294        0x4 
  .text          0x80011298       0x10 third_party/psyq/lib\libapi.a(a91.o)
@@ -390,7 +384,7 @@ END GROUP
  *(.rodata .rodata.* .rdata .rdata.* .gnu.linkonce.r.*)
  .rodata        0x80016790       0x10 third_party/nugget/common/crt0/crt0.o
  .rodata.main.str1.4
-                0x800167a0       0x44 main.o
+                0x800167a0       0x44 src/main.o
  *fill*         0x800167e4        0x4 
  .rdata         0x800167e8       0x10 third_party/psyq/lib\libetc.a(vsync.o)
  .rdata         0x800167f8       0x70 third_party/psyq/lib\libetc.a(intr.o)
@@ -433,111 +427,109 @@ END GROUP
  *(.rodata1)
                 0x80016b90                        __data_start = .
 
-.data           0x80016b90     0x3c70
+.data           0x80016b90     0x3470
  *(.data .data.* .gnu.linkonce.d.*)
  .data          0x80016b90        0x0 third_party/nugget/common/crt0/crt0.o
- .data          0x80016b90        0x0 main.o
+ .data          0x80016b90        0x0 src/main.o
  .data.player_tri
-                0x80016b90       0x18 main.o
+                0x80016b90       0x18 src/main.o
                 0x80016b90                player_tri
- .data          0x80016ba8     0x1220 my_image.o
+ .data          0x80016ba8     0x1220 assets/my_image.o
                 0x80016ba8                tim_my_image
- .data          0x80017dc8      0x840 ak-fnt.o
-                0x80017dc8                tim_ak_fnt
- .data          0x80018608       0x10 third_party/psyq/lib\libapi.a(pad.o)
- .data          0x80018618       0x20 third_party/psyq/lib\libetc.a(vsync.o)
-                0x80018628                Hcount
- .data          0x80018638       0x30 third_party/psyq/lib\libetc.a(intr_vb.o)
-                0x80018658                Vcount
- .data          0x80018668     0x1100 third_party/psyq/lib\libetc.a(intr.o)
- .data          0x80019768       0x30 third_party/psyq/lib\libetc.a(intr_dma.o)
- .data          0x80019798      0xb90 third_party/psyq/lib\libgpu.a(font.o)
-                0x80019798                Font
- .data          0x8001a328      0x1a0 third_party/psyq/lib\libgpu.a(sys.o)
-                0x8001a374                GPU_printf
-                0x8001a378                GEnv
-                0x8001a4a0                _qin
-                0x8001a4a4                _qout
- .data          0x8001a4c8       0x20 third_party/psyq/lib\libgte.a(cor_01.o)
-                0x8001a4c8                H_cor_tbl
- .data          0x8001a4e8       0x10 third_party/psyq/lib\libetc.a(vmode.o)
+ .data          0x80017dc8       0x10 third_party/psyq/lib\libapi.a(pad.o)
+ .data          0x80017dd8       0x20 third_party/psyq/lib\libetc.a(vsync.o)
+                0x80017de8                Hcount
+ .data          0x80017df8       0x30 third_party/psyq/lib\libetc.a(intr_vb.o)
+                0x80017e18                Vcount
+ .data          0x80017e28     0x1100 third_party/psyq/lib\libetc.a(intr.o)
+ .data          0x80018f28       0x30 third_party/psyq/lib\libetc.a(intr_dma.o)
+ .data          0x80018f58      0xb90 third_party/psyq/lib\libgpu.a(font.o)
+                0x80018f58                Font
+ .data          0x80019ae8      0x1a0 third_party/psyq/lib\libgpu.a(sys.o)
+                0x80019b34                GPU_printf
+                0x80019b38                GEnv
+                0x80019c60                _qin
+                0x80019c64                _qout
+ .data          0x80019c88       0x20 third_party/psyq/lib\libgte.a(cor_01.o)
+                0x80019c88                H_cor_tbl
+ .data          0x80019ca8       0x10 third_party/psyq/lib\libetc.a(vmode.o)
  *(.data1)
  *(.sdata .sdata.* .gnu.linkonce.s.*)
  *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
  *(.got.plt)
  *(.got)
-                0x8001a800                        . = ALIGN (0x800)
- *fill*         0x8001a4f8      0x308 50414444
-                0x8001a800                        __data_end = .
-                0x8001a800                        __fdata_end = .
-                0x8001a800                        __bss_start = .
+                0x8001a000                        . = ALIGN (0x800)
+ *fill*         0x80019cb8      0x348 50414444
+                0x8001a000                        __data_end = .
+                0x8001a000                        __fdata_end = .
+                0x8001a000                        __bss_start = .
 
-.sbss           0x8001a800    0x16050
+.sbss           0x8001a000    0x16050
  *(.dynsbss)
  *(.sbss .sbss.* .gnu.linkonce.sb.*)
  .sbss.shake_magnitude
-                0x8001a800        0x4 main.o
-                0x8001a800                shake_magnitude
+                0x8001a000        0x4 src/main.o
+                0x8001a000                shake_magnitude
  .sbss.shake_timer
-                0x8001a804        0x4 main.o
-                0x8001a804                shake_timer
+                0x8001a004        0x4 src/main.o
+                0x8001a004                shake_timer
  .sbss.tim_voffs
-                0x8001a808        0x4 main.o
-                0x8001a808                tim_voffs
+                0x8001a008        0x4 src/main.o
+                0x8001a008                tim_voffs
  .sbss.tim_uoffs
-                0x8001a80c        0x4 main.o
-                0x8001a80c                tim_uoffs
+                0x8001a00c        0x4 src/main.o
+                0x8001a00c                tim_uoffs
  .sbss.tim_crect
-                0x8001a810        0x8 main.o
-                0x8001a810                tim_crect
+                0x8001a010        0x8 src/main.o
+                0x8001a010                tim_crect
  .sbss.tim_prect
-                0x8001a818        0x8 main.o
-                0x8001a818                tim_prect
+                0x8001a018        0x8 src/main.o
+                0x8001a018                tim_prect
  .sbss.tim_mode
-                0x8001a820        0x4 main.o
-                0x8001a820                tim_mode
- .sbss.nextpri  0x8001a824        0x4 main.o
-                0x8001a824                nextpri
- .sbss.db       0x8001a828        0x4 main.o
-                0x8001a828                db
- .sbss.score    0x8001a82c        0x4 main.o
-                0x8001a82c                score
- .sbss.alive    0x8001a830        0x4 main.o
-                0x8001a830                alive
+                0x8001a020        0x4 src/main.o
+                0x8001a020                tim_mode
+ .sbss.nextpri  0x8001a024        0x4 src/main.o
+                0x8001a024                nextpri
+ .sbss.db       0x8001a028        0x4 src/main.o
+                0x8001a028                db
+ .sbss.score    0x8001a02c        0x4 src/main.o
+                0x8001a02c                score
+ .sbss.alive    0x8001a030        0x4 src/main.o
+                0x8001a030                alive
  *(.scommon)
  *(.dynbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
- .bss.padbuff   0x8001a834       0x44 main.o
-                0x8001a834                padbuff
- .bss.pribuff   0x8001a878    0x10000 main.o
-                0x8001a878                pribuff
- .bss.ot        0x8002a878       0x40 main.o
-                0x8002a878                ot
- .bss.draw      0x8002a8b8       0xb8 main.o
-                0x8002a8b8                draw
- .bss.disp      0x8002a970       0x28 main.o
-                0x8002a970                disp
- .bss.bullets   0x8002a998       0x14 main.o
-                0x8002a998                bullets
+ .bss.padbuff   0x8001a034       0x44 src/main.o
+                0x8001a034                padbuff
+ .bss.pribuff   0x8001a078    0x10000 src/main.o
+                0x8001a078                pribuff
+ .bss.ot        0x8002a078       0x40 src/main.o
+                0x8002a078                ot
+ .bss.draw      0x8002a0b8       0xb8 src/main.o
+                0x8002a0b8                draw
+ .bss.disp      0x8002a170       0x28 src/main.o
+                0x8002a170                disp
+ .bss.bullets   0x8002a198       0x14 src/main.o
+                0x8002a198                bullets
  .bss.asteroids
-                0x8002a9ac      0x100 main.o
-                0x8002a9ac                asteroids
+                0x8002a1ac      0x100 src/main.o
+                0x8002a1ac                asteroids
  .bss.explosions
-                0x8002aaac      0x100 main.o
-                0x8002aaac                explosions
- *fill*         0x8002abac        0x4 
- .bss           0x8002abb0       0x10 third_party/psyq/lib\libapi.a(pad.o)
-                0x8002abb0                _apiPadPatch
- .bss           0x8002abc0       0x10 third_party/psyq/lib\libapi.a(patch.o)
- .bss           0x8002abd0       0x10 third_party/psyq/lib\libapi.a(chclrpad.o)
- .bss           0x8002abe0     0x4410 third_party/psyq/lib\libgpu.a(font.o)
- .bss           0x8002eff0     0x1850 third_party/psyq/lib\libgpu.a(sys.o)
-                0x8002f040                _que
- .bss           0x80030840       0x10 third_party/psyq/lib\libgpu.a(t00.o)
+                0x8002a2ac      0x100 src/main.o
+                0x8002a2ac                explosions
+ *fill*         0x8002a3ac        0x4 
+ .bss           0x8002a3b0       0x10 third_party/psyq/lib\libapi.a(pad.o)
+                0x8002a3b0                _apiPadPatch
+ .bss           0x8002a3c0       0x10 third_party/psyq/lib\libapi.a(patch.o)
+ .bss           0x8002a3d0       0x10 third_party/psyq/lib\libapi.a(chclrpad.o)
+ .bss           0x8002a3e0     0x4410 third_party/psyq/lib\libgpu.a(font.o)
+ .bss           0x8002e7f0     0x1850 third_party/psyq/lib\libgpu.a(sys.o)
+                0x8002e840                _que
+ .bss           0x80030040       0x10 third_party/psyq/lib\libgpu.a(t00.o)
  *(COMMON)
-                0x80030850                        . = ALIGN (0x4)
-                0x80030850                        __bss_end = .
-                0x80030850                        __heap_start = __heap_base
+                0x80030050                        . = ALIGN (0x4)
+                0x80030050                        __bss_end = .
+                0x80030050                        __heap_start = __heap_base
                 0x8000f800                        . = (ADDR (.text) - 0x800)
                 0x8000f800                        __end = .
 
@@ -566,25 +558,22 @@ OUTPUT(MAIN.elf elf32-littlemips)
 
 .pdr            0x00000000        0x0
  .pdr           0x00000000        0x0 third_party/nugget/common/crt0/crt0.o
- .pdr           0x00000000        0x0 my_image.o
- .pdr           0x00000000        0x0 ak-fnt.o
+ .pdr           0x00000000        0x0 assets/my_image.o
 
 .gnu.attributes
                 0x00000000       0x10
  .gnu.attributes
                 0x00000000       0x10 third_party/nugget/common/crt0/crt0.o
  .gnu.attributes
-                0x00000010       0x10 main.o
+                0x00000010       0x10 src/main.o
  .gnu.attributes
-                0x00000020       0x10 my_image.o
- .gnu.attributes
-                0x00000030       0x10 ak-fnt.o
+                0x00000020       0x10 assets/my_image.o
 
 .mdebug.abi32   0x00000000        0x0
- .mdebug.abi32  0x00000000        0x0 main.o
+ .mdebug.abi32  0x00000000        0x0 src/main.o
 
 .comment        0x00000000       0x12
- .comment       0x00000000       0x12 main.o
+ .comment       0x00000000       0x12 src/main.o
                                  0x13 (size before relaxing)
 
 .note           0x00000000     0x15c0
@@ -637,43 +626,43 @@ OUTPUT(MAIN.elf elf32-littlemips)
  .note          0x000014d8       0x74 third_party/psyq/lib\libc.a(c63.o)
  .note          0x0000154c       0x74 third_party/psyq/lib\libetc.a(vmode.o)
 
-.debug_line     0x00000000      0xcf8
+.debug_line     0x00000000      0xcfc
  .debug_line    0x00000000       0x5b third_party/nugget/common/crt0/crt0.o
- .debug_line    0x0000005b      0xc9d main.o
+ .debug_line    0x0000005b      0xca1 src/main.o
 
 .debug_line_str
-                0x00000000       0x44
+                0x00000000       0x43
  .debug_line_str
-                0x00000000       0x44 third_party/nugget/common/crt0/crt0.o
+                0x00000000       0x43 third_party/nugget/common/crt0/crt0.o
 
 .debug_info     0x00000000     0x193d
  .debug_info    0x00000000       0x24 third_party/nugget/common/crt0/crt0.o
- .debug_info    0x00000024     0x1919 main.o
+ .debug_info    0x00000024     0x1919 src/main.o
 
 .debug_abbrev   0x00000000      0x4c1
  .debug_abbrev  0x00000000       0x14 third_party/nugget/common/crt0/crt0.o
- .debug_abbrev  0x00000014      0x4ad main.o
+ .debug_abbrev  0x00000014      0x4ad src/main.o
 
 .debug_aranges  0x00000000       0x78
  .debug_aranges
                 0x00000000       0x20 third_party/nugget/common/crt0/crt0.o
  .debug_aranges
-                0x00000020       0x58 main.o
+                0x00000020       0x58 src/main.o
 
-.debug_str      0x00000000      0x509
- .debug_str     0x00000000      0x509 third_party/nugget/common/crt0/crt0.o
-                                 0x50 (size before relaxing)
- .debug_str     0x00000509      0x542 main.o
+.debug_str      0x00000000      0x50c
+ .debug_str     0x00000000      0x50c third_party/nugget/common/crt0/crt0.o
+                                 0x4f (size before relaxing)
+ .debug_str     0x0000050c      0x545 src/main.o
 
 .debug_loclists
                 0x00000000      0x7cb
  .debug_loclists
-                0x00000000      0x7cb main.o
+                0x00000000      0x7cb src/main.o
 
 .debug_rnglists
                 0x00000000       0xa4
  .debug_rnglists
-                0x00000000       0xa4 main.o
+                0x00000000       0xa4 src/main.o
 
 .debug_frame    0x00000000      0x14c
- .debug_frame   0x00000000      0x14c main.o
+ .debug_frame   0x00000000      0x14c src/main.o

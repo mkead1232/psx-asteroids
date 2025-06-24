@@ -1,4 +1,4 @@
-main.o: main.c third_party/psyq-iwyu/include/libapi.h \
+src/main.o: src/main.c third_party/psyq-iwyu/include/libapi.h \
  third_party/psyq-iwyu/include/kernel.h \
  third_party/psyq-iwyu/include/r3000.h \
  third_party/psyq-iwyu/include/asm.h \
