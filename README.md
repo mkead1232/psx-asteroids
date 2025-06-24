@@ -7,6 +7,8 @@ Sorry for the messy file structure! I wrote this on my Steam Deck on a vacation,
 
 To actually compile, you need to install nugget + psyq to the project folder. You need git installed for this to work. To do this, you need to:
 
+0. Install the MIPS gcc compiler by following the tutorial for your OS at https://github.com/pcsx-redux/nugget/blob/main/psyqo/GETTING_STARTED.md
+
 1 Run:
 ```cmd
 git init
@@ -18,4 +20,9 @@ git submodule add https://github.com/pcsx-redux/nugget.git third_party/nugget
 git submodule add https://github.com/johnbaumann/psyq_include_what_you_use.git third_party/psyq-iwyu
 ```
 
-Then, you need to download the PSYQ converted libraries at:
+Then, you need to download the PSYQ converted libraries at: http://psx.arthus.net/sdk/Psy-Q/psyq-4.7-converted-full.7z And move it to 
+```
+third_party/psyq
+```
+
+Now it should compile after every condition is met.
