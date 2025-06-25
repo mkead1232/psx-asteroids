@@ -40,6 +40,18 @@ int score;
 
 typedef struct {
     int x, y;
+    int vx, vy;
+    int angle;
+    int spin;
+    int life;
+    int active;
+} Shrapnel;
+
+#define MAX_SHRAPNEL 16
+Shrapnel shrapnelPieces[MAX_SHRAPNEL];
+
+typedef struct {
+    int x, y;
     int frame;
     int active;
 } Explosion;
@@ -117,6 +129,15 @@ typedef struct _PADTYPE {
     unsigned char rs_x, rs_y;
     unsigned char ls_x, ls_y;
 } PADTYPE;
+
+typedef struct {
+    int x, y;
+    int brightness; // 0–255
+    int twinkleSpeed;
+} Star;
+
+#define MAX_STARS 64
+Star stars[MAX_STARS];
 
 int shake_timer = 0;
 int shake_magnitude = 0;
@@ -235,6 +256,13 @@ void init(void) {
     // load textures and possibly other stuff
     loadstuff();
 
+    for (int i = 0; i < MAX_STARS; i++) {
+        stars[i].x = rand() % 320;
+        stars[i].y = rand() % 240;
+        stars[i].brightness = rand() % 256;
+        stars[i].twinkleSpeed = (rand() % 3) + 1; // 1–3
+    }
+
     // set tpage of lone texture as initial tpage
     draw[0].tpage = getTPage(tim_mode & 0x3, 0, tim_prect.x, tim_prect.y);
     draw[1].tpage = getTPage(tim_mode & 0x3, 0, tim_prect.x, tim_prect.y);
@@ -259,6 +287,14 @@ void init(void) {
 
     draw[0].dtd = 1; // Enable dithering
     draw[1].dtd = 1;
+}
+
+int getMaxAsteroids() {
+    int base = 3;
+    int extra = score / 5; // Add 1 asteroid for every 5 points
+    int max = base + extra;
+    if (max > MAX_ASTEROIDS) max = MAX_ASTEROIDS;
+    return max;
 }
 
 void sortRotSprite(int x, int y, int pw, int ph, int angle, int scale) {
@@ -365,6 +401,64 @@ int checkCollision(int x1, int y1, int r1, int x2, int y2, int r2) {
     return distSq <= radSum * radSum;
 }
 
+void drawStars(void) {
+    for (int i = 0; i < MAX_STARS; i++) {
+        TILE *t = (TILE *)nextpri;
+        setTile(t);
+        setXY0(t, stars[i].x, stars[i].y);
+        setWH(t, 1, 1); // 1-pixel star
+        setRGB0(t, stars[i].brightness, stars[i].brightness, stars[i].brightness);
+        addPrim(ot[db], t);
+        nextpri += sizeof(TILE);
+
+        // Twinkle
+        stars[i].brightness += stars[i].twinkleSpeed;
+        if (stars[i].brightness > 255 || stars[i].brightness < 0) {
+            stars[i].twinkleSpeed = -stars[i].twinkleSpeed;
+            stars[i].brightness += stars[i].twinkleSpeed;
+        }
+    }
+}
+
+void updateShrapnel(void) {
+    for (int i = 0; i < MAX_SHRAPNEL; i++) {
+        if (!shrapnelPieces[i].active) continue;
+
+        shrapnelPieces[i].x += shrapnelPieces[i].vx;
+        shrapnelPieces[i].y += shrapnelPieces[i].vy;
+        shrapnelPieces[i].angle += shrapnelPieces[i].spin;
+        shrapnelPieces[i].life--;
+
+        if (shrapnelPieces[i].life <= 0) {
+            shrapnelPieces[i].active = 0;
+            continue;
+        }
+
+        // Draw triangle
+        SVECTOR tri[3] = {
+            {0, -4, 0}, {4, 4, 0}, {-4, 4, 0}
+        };
+
+        SVECTOR out[3];
+        for (int j = 0; j < 3; j++) {
+            out[j].vx = (((tri[j].vx * ccos(shrapnelPieces[i].angle)) -
+                          (tri[j].vy * csin(shrapnelPieces[i].angle))) >> 12) +
+                        (shrapnelPieces[i].x >> 12);
+            out[j].vy = (((tri[j].vy * ccos(shrapnelPieces[i].angle)) +
+                          (tri[j].vx * csin(shrapnelPieces[i].angle))) >> 12) +
+                        (shrapnelPieces[i].y >> 12);
+        }
+
+        POLY_F3 *p = (POLY_F3 *)nextpri;
+        setPolyF3(p);
+        setRGB0(p, 255, 255, 255);
+        setXY3(p, out[0].vx, out[0].vy, out[1].vx, out[1].vy, out[2].vx, out[2].vy);
+        addPrim(ot[db], p);
+        nextpri += sizeof(POLY_F3);
+    }
+}
+
+
 // ---- GAME UPDATE ----
 void updateGame(PADTYPE *pad) {
     static int spawn_timer = 0;
@@ -406,8 +500,17 @@ void updateGame(PADTYPE *pad) {
     }
 
     spawn_timer++;
-    if (spawn_timer > 60) { // ~1 sec @ 60fps
-        spawnAsteroid();
+    if (spawn_timer > 60) {
+        int activeCount = 0;
+        for (int i = 0; i < MAX_ASTEROIDS; i++) {
+            if (asteroids[i].active) activeCount++;
+        }
+
+        int maxAllowed = getMaxAsteroids();
+        if (activeCount < maxAllowed) {
+            spawnAsteroid();
+        }
+
         spawn_timer = 0;
     }
 
@@ -490,10 +593,15 @@ void updateGame(PADTYPE *pad) {
             int sx = asteroids[i].x >> 12;
             int sy = asteroids[i].y >> 12;
 
-            if (sx < -64 || sx > 384 || sy < -64 || sy > 304) {
-                asteroids[i].active = 0;
-                continue;
-            }
+            // Wrap around screen like the player
+            if ((asteroids[i].x >> 12) < -64)
+                asteroids[i].x += (384 << 12); // 320 + 64
+            if ((asteroids[i].x >> 12) > 384)
+                asteroids[i].x -= (384 << 12);
+            if ((asteroids[i].y >> 12) < -64)
+                asteroids[i].y += (304 << 12); // 240 + 64
+            if ((asteroids[i].y >> 12) > 304)
+                asteroids[i].y -= (304 << 12);
 
             sortRotSprite(sx, sy, 64, 64, asteroids[i].angle, asteroids[i].scale);
         }
@@ -512,6 +620,29 @@ void updateGame(PADTYPE *pad) {
                                asteroids[a].x, asteroids[a].y, ASTEROID_RADIUS)) {
                 bullets[b].active = 0;
                 asteroids[a].active = 0;
+                int num_shrapnel_to_spawn = 3 + rand() % 3;
+
+                // Spawn shrapnel
+                for (int s = 0; s < MAX_SHRAPNEL; s++) {
+                    if (!shrapnelPieces[s].active) {
+                        shrapnelPieces[s].x = asteroids[a].x;
+                        shrapnelPieces[s].y = asteroids[a].y;
+
+                        int angle = rand() % 4096;
+                        int speed = (rand() % 3 + 1) << 11;
+
+                        shrapnelPieces[s].vx = (csin(angle) * speed) >> 12;
+                        shrapnelPieces[s].vy = (ccos(angle) * speed) >> 12;
+                        shrapnelPieces[s].angle = rand() % 4096;
+                        shrapnelPieces[s].spin = (rand() % 15) - 7;
+                        shrapnelPieces[s].life = 30;
+                        shrapnelPieces[s].active = 1;
+
+                        // only spawn a few
+                        if (--num_shrapnel_to_spawn <= 0)
+                            break;
+                    }
+                }
                 score += 1;
 
                 // Create explosion
@@ -582,7 +713,10 @@ void updateGame(PADTYPE *pad) {
 
     // Draw score
     FntPrint("SCORE: %d", score);
+    drawStars();
+    updateShrapnel();
 }
+
 
 // Assumes 40 chars wide font window, 8px wide chars
 void centerPrint(const char *str) {
@@ -655,6 +789,8 @@ void updateTitleScreen(PADTYPE *pad) {
     centerPrint("2P NOT IMPLEMENTED YET");
 
     prev_buttons = pad->btn;
+
+    drawStars();
 }
 
 
@@ -682,6 +818,7 @@ void updateGameOver(PADTYPE *pad) {
 
         gameState = STATE_PLAYING;
     }
+    drawStars();
 }
 
 int main() {
@@ -722,3 +859,4 @@ int main() {
 
     return 0;
 }
+
