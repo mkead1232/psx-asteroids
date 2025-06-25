@@ -1,4 +1,3 @@
-
 /*
   This is an Asteroids clone I, Aden Kirk (mkead1232) wrote in 2 files. main.c,
   and my_image.s. I built it off of Lameguy64's PS1 tutorial series for PSY-Q.
@@ -7,7 +6,6 @@
 
   Sorry for the messy file structure!
   -Aden
-
 
   Made for the mips GCC compiler
 */
@@ -18,7 +16,21 @@
 #include <libgte.h> // GTE header, not really used but libgpu.h depends on it
 #include <stdio.h>  // Not necessary but include it anyway
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h> // This provides typedefs needed by libgte.h and libgpu.h
+
+typedef enum {
+    MENU_1_PLAYER,
+    MENU_2_PLAYER,
+    MENU_OPTION_COUNT
+} MenuOption;
+
+int twoPMessageTimer = 0;
+int twoPMessageFade = 255;
+
+int selectedOption = 0;
+
+int titleDelay = 60; // frames, e.g. 1 second delay at 60fps
 
 int alive;
 
@@ -77,6 +89,8 @@ int tim_mode; // TIM image parameters
 RECT tim_prect, tim_crect;
 int tim_uoffs, tim_voffs;
 
+int notImplementedTimer = 0;
+
 // Pad stuff (omit when using PSn00bSDK)
 #define PAD_SELECT 1
 #define PAD_L3 2
@@ -112,6 +126,29 @@ u_char padbuff[2][34];
 
 SVECTOR player_tri[] = {{0, -10, 0}, {10, 20, 0}, {-10, 20, 0}};
 
+// Global player position, velocity, angle
+int pos_x, pos_y, angle;
+int vel_x, vel_y;
+
+typedef enum {
+    STATE_TITLE,
+    STATE_PLAYING,
+    STATE_GAME_OVER
+} GameState;
+
+GameState gameState = STATE_TITLE;
+
+// Forward declarations
+void display(void);
+void loadstuff(void);
+void init(void);
+void sortRotSprite(int x, int y, int pw, int ph, int angle, int scale);
+void spawnAsteroid(void);
+int checkCollision(int x1, int y1, int r1, int x2, int y2, int r2);
+void updateTitleScreen(PADTYPE *pad);
+void updateGame(PADTYPE *pad);
+void updateGameOver(PADTYPE *pad);
+
 void display() {
     DrawSync(0); // Wait for any graphics processing to finish
     VSync(0);    // Wait for vertical retrace
@@ -136,15 +173,13 @@ void display() {
     db = !db;                 // Swap buffers
     nextpri = pribuff[db];    // Reset primitive pointer
 }
+
 // Texture upload function
 void LoadTexture(u_long *tim, TIM_IMAGE *tparam) {
 
     // Read TIM parameters (PsyQ)
     OpenTIM(tim);
     ReadTIM(tparam);
-
-    // Read TIM parameters (PSn00bSDK)
-    // GetTimInfo(tim, tparam);
 
     // Upload pixel data to framebuffer
     LoadImage(tparam->prect, (u_long *)tparam->paddr);
@@ -220,7 +255,7 @@ void init(void) {
     FntLoad(960, 0);
 
     // Define a font window of 100 characters covering the whole screen
-    FntOpen(0, 8, 320, 224, 0, 100);
+    FntOpen(0, 8, 320, 224, 0, 200);
 
     draw[0].dtd = 1; // Enable dithering
     draw[1].dtd = 1;
@@ -330,271 +365,358 @@ int checkCollision(int x1, int y1, int r1, int x2, int y2, int r2) {
     return distSq <= radSum * radSum;
 }
 
-int main() {
-    int spawn_timer = 0;
-    alive = 1;
-    int vel_x, vel_y;
+// ---- GAME UPDATE ----
+void updateGame(PADTYPE *pad) {
+    static int spawn_timer = 0;
     int i;
-    int pos_x, pos_y, angle, spangle;
-    PADTYPE *pad;
-    TILE *tile; // Pointer for TILE
-    SPRT *sprt; // Pointer for SPRT
-    POLY_F3 *tri;
-    SVECTOR v[3];
-    // just to make sure they don't contain garbage
-    vel_x = 0;
-    vel_y = 0;
 
-    // Init stuff
-    init();
+    // Player input
+    if (!(pad->btn & PAD_UP)) {
+        vel_x += csin(angle) >> 3;
+        vel_y -= ccos(angle) >> 3;
+    } else if (!(pad->btn & PAD_DOWN)) {
+        vel_x -= csin(angle) >> 3;
+        vel_y += ccos(angle) >> 3;
+    }
+    if (!(pad->btn & PAD_LEFT)) {
+        angle -= 32;
+    } else if (!(pad->btn & PAD_RIGHT)) {
+        angle += 32;
+    }
 
-    pos_x = ONE * (disp[0].disp.w >> 1);
-    pos_y = ONE * (disp[0].disp.h >> 1);
-    angle = 0;
-
-    while (1) {
-        if (alive){
-            // Parse controller input
-            pad = (PADTYPE *)padbuff[0];
-
-            if (!(pad->btn & PAD_UP)) // test UP
-            {
-                vel_x += csin(angle) >> 3;
-                vel_y -= ccos(angle) >> 3;
-            } else if (!(pad->btn & PAD_DOWN)) // test DOWN
-            {
-                vel_x -= csin(angle) >> 3;
-                vel_y += ccos(angle) >> 3;
-            }
-            if (!(pad->btn & PAD_LEFT)) // test LEFT
-            {
-                // Turns counter-clockwise
-                angle -= 32;
-            } else if (!(pad->btn & PAD_RIGHT)) // test RIGHT
-            {
-                // Turns clockwise
-                angle += 32;
-            }
-
-            // Fire a bullet when pressing Triangle
-            if (!(pad->btn & PAD_TRIANGLE)) {
-                for (i = 0; i < MAX_BULLETS; i++) {
-                    if (!bullets[i].active) {
-                        // Get tip of triangle in world space (v[0])
-                        int bx = v[0].vx << 12;
-                        int by = v[0].vy << 12;
-
-                        // Compute bullet velocity based on angle
-                        int speed = 3 << 12; // adjust bullet speed here
-                        int bvx = (csin(angle) * speed) >> 12;
-                        int bvy = -(ccos(angle) * speed) >> 12;
-
-                        bullets[i].x = bx;
-                        bullets[i].y = by;
-                        bullets[i].vx = bvx;
-                        bullets[i].vy = bvy;
-                        bullets[i].active = 1;
-                        break;
-                    }
-                }
-            }
-        }
-
-        spawn_timer++;
-        if (spawn_timer > 60) { // every ~1 second (assuming 60fps)
-            spawnAsteroid();
-            spawn_timer = 0;
-        }
-
-        // equivalent to multiplying each axis by 0.9765625
-        vel_x = (vel_x * 4000) >> 12;
-        vel_y = (vel_y * 4000) >> 12;
-
-        // accumulate player coordinates by its velocity
-        pos_x += vel_x;
-        pos_y += vel_y;
-
-        // wrap player coordinates from going off-screen
-        if ((pos_x >> 12) < 0) {
-            pos_x += (320 << 12);
-        }
-        if ((pos_x >> 12) > 320) {
-            pos_x -= (320 << 12);
-        }
-        if ((pos_y >> 12) < 0) {
-            pos_y += (240 << 12);
-        }
-        if ((pos_y >> 12) > 240) {
-            pos_y -= (240 << 12);
-        }
-
-        ClearOTagR(ot[db], OTLEN); // Clear ordering table
-
-        // Rotate the triangle coordinates based on the player's angle
-        // as well as apply the position
-        for (i = 0; i < 3; i++) {
-            v[i].vx = (((player_tri[i].vx * ccos(angle)) -
-                        (player_tri[i].vy * csin(angle))) >>
-                       12) +
-                      (pos_x >> 12);
-            v[i].vy = (((player_tri[i].vy * ccos(angle)) +
-                        (player_tri[i].vx * csin(angle))) >>
-                       12) +
-                      (pos_y >> 12);
-        }
-
-        // Sort the player triangle
-        tri = (POLY_F3 *)nextpri;
-        setPolyF3(tri);
-        setRGB0(tri, 255, 255, 255);
-        setXY3(tri, v[0].vx, v[0].vy, v[1].vx, v[1].vy, v[2].vx, v[2].vy);
-
-        addPrim(ot[db], tri);
-        nextpri += sizeof(POLY_F3);
-
+    // Fire bullet with Triangle
+    if (!(pad->btn & PAD_TRIANGLE)) {
         for (i = 0; i < MAX_BULLETS; i++) {
-            if (bullets[i].active) {
-                // Move bullet
-                bullets[i].x += bullets[i].vx;
-                bullets[i].y += bullets[i].vy;
+            if (!bullets[i].active) {
+                int bx = player_tri[0].vx << 12;
+                int by = player_tri[0].vy << 12;
 
-                int sx = bullets[i].x >> 12;
-                int sy = bullets[i].y >> 12;
+                int speed = 3 << 12;
+                int bvx = (csin(angle) * speed) >> 12;
+                int bvy = -(ccos(angle) * speed) >> 12;
 
-                // If offscreen, deactivate
-                if (sx < 0 || sx > 320 || sy < 0 || sy > 240) {
-                    bullets[i].active = 0;
-                    continue;
-                }
-
-                // Draw bullet as white POLY_F4
-                POLY_F4 *b = (POLY_F4 *)nextpri;
-                setPolyF4(b);
-                setRGB0(b, 255, 255, 255);
-                setXY4(b, sx - 2, sy - 2, sx + 2, sy - 2, sx - 2, sy + 2,
-                       sx + 2, sy + 2);
-                addPrim(ot[db], b);
-                nextpri += sizeof(POLY_F4);
+                bullets[i].x = pos_x + bx;
+                bullets[i].y = pos_y + by;
+                bullets[i].vx = bvx;
+                bullets[i].vy = bvy;
+                bullets[i].active = 1;
+                break;
             }
         }
+    }
 
-        for (i = 0; i < MAX_ASTEROIDS; i++) {
-            if (asteroids[i].active) {
-                asteroids[i].x += asteroids[i].vx;
-                asteroids[i].y += asteroids[i].vy;
-                asteroids[i].angle += asteroids[i].spin;
+    spawn_timer++;
+    if (spawn_timer > 60) { // ~1 sec @ 60fps
+        spawnAsteroid();
+        spawn_timer = 0;
+    }
 
-                int sx = asteroids[i].x >> 12;
-                int sy = asteroids[i].y >> 12;
+    // Apply friction
+    vel_x = (vel_x * 4000) >> 12;
+    vel_y = (vel_y * 4000) >> 12;
 
-                // Offscreen cleanup
-                if (sx < -64 || sx > 384 || sy < -64 || sy > 304) {
-                    asteroids[i].active = 0;
-                    continue;
-                }
+    // Move player
+    pos_x += vel_x;
+    pos_y += vel_y;
 
-                sortRotSprite(sx, sy, 64, 64, asteroids[i].angle,
-                              asteroids[i].scale);
-            }
-        }
+    // Screen wrap for player
+    if ((pos_x >> 12) < 0) pos_x += (320 << 12);
+    if ((pos_x >> 12) > 320) pos_x -= (320 << 12);
+    if ((pos_y >> 12) < 0) pos_y += (240 << 12);
+    if ((pos_y >> 12) > 240) pos_y -= (240 << 12);
 
-        // Bullet-Asteroid collisions
-        for (int b = 0; b < MAX_BULLETS; b++) {
-            if (!bullets[b].active)
-                continue;
+    // Rotate and draw player triangle
+    SVECTOR v[3];
+    for (i = 0; i < 3; i++) {
+        v[i].vx = (((player_tri[i].vx * ccos(angle)) -
+                    (player_tri[i].vy * csin(angle))) >>
+                   12) +
+                  (pos_x >> 12);
+        v[i].vy = (((player_tri[i].vy * ccos(angle)) +
+                    (player_tri[i].vx * csin(angle))) >>
+                   12) +
+                  (pos_y >> 12);
+    }
 
-            for (int a = 0; a < MAX_ASTEROIDS; a++) {
-                if (!asteroids[a].active)
-                    continue;
+    POLY_F3 *tri = (POLY_F3 *)nextpri;
+    setPolyF3(tri);
+    setRGB0(tri, 255, 255, 255);
+    setXY3(tri, v[0].vx, v[0].vy, v[1].vx, v[1].vy, v[2].vx, v[2].vy);
+    addPrim(ot[db], tri);
+    nextpri += sizeof(POLY_F3);
 
-                if (checkCollision(bullets[b].x, bullets[b].y, BULLET_RADIUS,
-                                   asteroids[a].x, asteroids[a].y,
-                                   ASTEROID_RADIUS)) {
-                    // Collision detected
-                    bullets[b].active = 0;
-                    asteroids[a].active = 0;
+    // Update and draw bullets
+    for (i = 0; i < MAX_BULLETS; i++) {
+        if (bullets[i].active) {
+            bullets[i].x += bullets[i].vx;
+            bullets[i].y += bullets[i].vy;
 
-                    score += 1;
-                }
-            }
+            int sx = bullets[i].x >> 12;
+            int sy = bullets[i].y >> 12;
 
-            // Create explosion
             for (int e = 0; e < MAX_EXPLOSIONS; e++) {
                 if (!explosions[e].active) {
-                    explosions[e].x = bullets[b].x;
-                    explosions[e].y = bullets[b].y;
+                    explosions[e].x = bullets[i].x;
+                    explosions[e].y = bullets[i].y;
                     explosions[e].frame = 0;
                     explosions[e].active = 1;
                     break;
                 }
             }
+
+
+            if (sx < 0 || sx > 320 || sy < 0 || sy > 240) {
+                bullets[i].active = 0;
+                continue;
+            }
+
+            POLY_F4 *b = (POLY_F4 *)nextpri;
+            setPolyF4(b);
+            setRGB0(b, 255, 255, 255);
+            setXY4(b, sx - 2, sy - 2, sx + 2, sy - 2, sx - 2, sy + 2, sx + 2,
+                   sy + 2);
+            addPrim(ot[db], b);
+            nextpri += sizeof(POLY_F4);
         }
+    }
+
+    // Update and draw asteroids
+    for (i = 0; i < MAX_ASTEROIDS; i++) {
+        if (asteroids[i].active) {
+            asteroids[i].x += asteroids[i].vx;
+            asteroids[i].y += asteroids[i].vy;
+            asteroids[i].angle += asteroids[i].spin;
+
+            int sx = asteroids[i].x >> 12;
+            int sy = asteroids[i].y >> 12;
+
+            if (sx < -64 || sx > 384 || sy < -64 || sy > 304) {
+                asteroids[i].active = 0;
+                continue;
+            }
+
+            sortRotSprite(sx, sy, 64, 64, asteroids[i].angle, asteroids[i].scale);
+        }
+    }
+
+    // Bullet-Asteroid collisions
+    for (int b = 0; b < MAX_BULLETS; b++) {
+        if (!bullets[b].active)
+            continue;
 
         for (int a = 0; a < MAX_ASTEROIDS; a++) {
-            if (!asteroids[a].active) continue;
-
-            if (checkCollision(pos_x, pos_y, 16, asteroids[a].x, asteroids[a].y,
-                               ASTEROID_RADIUS)) {
-                score = 0;
-
-                pos_x = ONE * (disp[0].disp.w >> 1);
-                pos_y = ONE * (disp[0].disp.h >> 1);
-
-                angle = 0;
-
-                vel_x = 0;
-                vel_y = 0;
-
-                asteroids[a].active = 0;
-
-                alive = 0;
-                shake_timer = 30;        // Shake for 30 frames (~0.5 sec at 60fps)
-                shake_magnitude = 4;     // Shake intensity in pixels
-            }
-        }
-
-        for (int e = 0; e < MAX_EXPLOSIONS; e++) {
-            if (!explosions[e].active)
+            if (!asteroids[a].active)
                 continue;
 
-            int sx = explosions[e].x >> 12;
-            int sy = explosions[e].y >> 12;
-            int size = 6 + explosions[e].frame * 2;
-            int fade = 255 - explosions[e].frame * 32;
-            if (fade < 0)
-                fade = 0;
+            if (checkCollision(bullets[b].x, bullets[b].y, BULLET_RADIUS,
+                               asteroids[a].x, asteroids[a].y, ASTEROID_RADIUS)) {
+                bullets[b].active = 0;
+                asteroids[a].active = 0;
+                score += 1;
 
-            TILE *t = (TILE *)nextpri;
-            setTile(t);
-            setXY0(t, sx - (size >> 1), sy - (size >> 1));
-            setWH(t, size, size);
-            setRGB0(t, fade, fade >> 1, 0); // Orange-ish fade
-            addPrim(ot[db], t);
-            nextpri += sizeof(TILE);
-
-            explosions[e].frame++;
-            if (explosions[e].frame > 7) {
-                explosions[e].active = 0;
+                // Create explosion
+                for (int e = 0; e < MAX_EXPLOSIONS; e++) {
+                    if (!explosions[e].active) {
+                        explosions[e].x = bullets[b].x;
+                        explosions[e].y = bullets[b].y;
+                        explosions[e].frame = 0;
+                        explosions[e].active = 1;
+                        break;
+                    }
+                }
             }
         }
+    }
 
-        if(alive)
-        {
-            FntPrint("SCORE: %d", (score));
+    // Player collision with asteroids
+    for (int a = 0; a < MAX_ASTEROIDS; a++) {
+        if (!asteroids[a].active)
+            continue;
+
+        if (checkCollision(pos_x, pos_y, 16, asteroids[a].x, asteroids[a].y,
+                           ASTEROID_RADIUS)) {
+            score = 0;
+
+            pos_x = ONE * (disp[0].disp.w >> 1);
+            pos_y = ONE * (disp[0].disp.h >> 1);
+
+            angle = 0;
+            vel_x = 0;
+            vel_y = 0;
+
+            asteroids[a].active = 0;
+
+            alive = 0;
+            shake_timer = 30;
+            shake_magnitude = 4;
+
+            gameState = STATE_GAME_OVER;
         }
+    }
 
-        else {
-            FntPrint("\n              GAME OVER!\n          PRESS X TO RESTART.");
+    // Update and draw explosions
+    for (int e = 0; e < MAX_EXPLOSIONS; e++) {
+        if (!explosions[e].active)
+            continue;
 
-            if (!alive && !(pad->btn & PAD_CROSS)) {
-                alive = 1;
-                shake_timer = 0;
-            }
+        int sx = explosions[e].x >> 12;
+        int sy = explosions[e].y >> 12;
+        int size = 6 + explosions[e].frame * 2;
+        int fade = 255 - explosions[e].frame * 32;
+        if (fade < 0)
+            fade = 0;
+
+        TILE *t = (TILE *)nextpri;
+        setTile(t);
+        setXY0(t, sx - (size >> 1), sy - (size >> 1));
+        setWH(t, size, size);
+        setRGB0(t, fade, fade >> 1, 0);
+        addPrim(ot[db], t);
+        nextpri += sizeof(TILE);
+
+        explosions[e].frame++;
+        if (explosions[e].frame > 7) {
+            explosions[e].active = 0;
+        }
+    }
+
+    // Draw score
+    FntPrint("SCORE: %d", score);
+}
+
+// Assumes 40 chars wide font window, 8px wide chars
+void centerPrint(const char *str) {
+    int len = strlen(str);
+    int total_width = 40; // 40 characters max per line
+    int pad = 0;
+
+    if (len < total_width)
+        pad = (total_width - len) / 2;
+    
+    for (int i = 0; i < pad; i++)
+        FntPrint(" ");
+
+    FntPrint("%s\n", str);
+}
+
+void updateTitleScreen(PADTYPE *pad) {
+
+    FntPrint("\n\n\n\n\n\n\n\n\n\n");
+    centerPrint("ASTEROIDS");
+    centerPrint("by Aden Kirk\n");
+
+    const char *options[] = {
+        "1 PLAYER",
+        "2 PLAYER"
+    };
+
+    char buffer[32];
+
+    for (int i = 0; i < MENU_OPTION_COUNT; i++) {
+        if (i == selectedOption)
+            sprintf(buffer, "> %s <", options[i]);
+        else
+            sprintf(buffer, "  %s", options[i]);
+
+        centerPrint(buffer);
+    }
+    // Handle input
+    static int prev_buttons = 0;
+
+    if ((pad->btn & PAD_DOWN) && !(prev_buttons & PAD_DOWN)) {
+        selectedOption = (selectedOption + 1) % MENU_OPTION_COUNT;
+    } else if ((pad->btn & PAD_UP) && !(prev_buttons & PAD_UP)) {
+        selectedOption = (selectedOption - 1 + MENU_OPTION_COUNT) % MENU_OPTION_COUNT;
+    }
+
+    if ((pad->btn & PAD_START) && !(prev_buttons & PAD_START)) {
+        if (selectedOption == MENU_1_PLAYER) {
+            // Start game
+            alive = 1;
+            score = 0;
+            pos_x = ONE * (disp[0].disp.w >> 1);
+            pos_y = ONE * (disp[0].disp.h >> 1);
+            angle = 0;
+            vel_x = 0;
+            vel_y = 0;
+
+            for (int i = 0; i < MAX_ASTEROIDS; i++)
+                asteroids[i].active = 0;
+            for (int i = 0; i < MAX_BULLETS; i++)
+                bullets[i].active = 0;
+            for (int i = 0; i < MAX_EXPLOSIONS; i++)
+                explosions[i].active = 0;
+
+            gameState = STATE_PLAYING;
+        }
+        
+    }
+
+    centerPrint("2P NOT IMPLEMENTED YET");
+
+    prev_buttons = pad->btn;
+}
+
+
+// ---- GAME OVER SCREEN UPDATE ----
+void updateGameOver(PADTYPE *pad) {
+    FntPrint("\n\n\n\n\n\n\n\n\n\n");
+    centerPrint("GAME OVER!\n\n");
+    centerPrint("PRESS X TO RESTART\n");
+
+    if (!(pad->btn & PAD_CROSS)) {
+        alive = 1;
+        score = 0;
+        pos_x = ONE * (disp[0].disp.w >> 1);
+        pos_y = ONE * (disp[0].disp.h >> 1);
+        angle = 0;
+        vel_x = 0;
+        vel_y = 0;
+
+        for (int i = 0; i < MAX_ASTEROIDS; i++)
+            asteroids[i].active = 0;
+        for (int i = 0; i < MAX_BULLETS; i++)
+            bullets[i].active = 0;
+        for (int i = 0; i < MAX_EXPLOSIONS; i++)
+            explosions[i].active = 0;
+
+        gameState = STATE_PLAYING;
+    }
+}
+
+int main() {
+    // Initialize everything
+    init();
+
+    // Initialize player position and state
+    pos_x = ONE * (disp[0].disp.w >> 1);
+    pos_y = ONE * (disp[0].disp.h >> 1);
+    angle = 0;
+    vel_x = 0;
+    vel_y = 0;
+    alive = 1;
+    score = 0;
+    gameState = STATE_TITLE;
+
+    while (1) {
+        PADTYPE *pad = (PADTYPE *)padbuff[0];
+
+        ClearOTagR(ot[db], OTLEN);
+
+        switch (gameState) {
+        case STATE_TITLE:
+            updateTitleScreen(pad);
+            break;
+        case STATE_PLAYING:
+            updateGame(pad);
+            break;
+        case STATE_GAME_OVER:
+            updateGameOver(pad);
+            break;
         }
 
         FntFlush(-1);
 
-        // Update the display
         display();
     }
 

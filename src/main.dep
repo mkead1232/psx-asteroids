@@ -14,4 +14,7 @@ src/main.o: src/main.c third_party/psyq-iwyu/include/libapi.h \
  third_party/psyq-iwyu/include/malloc.h \
  third_party/psyq-iwyu/include/qsort.h \
  third_party/psyq-iwyu/include/rand.h \
+ third_party/psyq-iwyu/include/string.h \
+ third_party/psyq-iwyu/include/strings.h \
+ third_party/psyq-iwyu/include/memory.h \
  third_party/psyq-iwyu/include/sys/types.h
