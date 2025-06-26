@@ -743,20 +743,20 @@ void updateGameCoop(PADTYPE *pad, PADTYPE *pad2) {
 
     // Player input
     if (!(pad2->btn & PAD_UP)) {
-        vel_x += csin(angle) >> 3;
-        vel_y -= ccos(angle) >> 3;
+        vel2_x += csin(angle) >> 3;
+        vel2_y -= ccos(angle) >> 3;
     } else if (!(pad2->btn & PAD_DOWN)) {
-        vel_x -= csin(angle) >> 3;
-        vel_y += ccos(angle) >> 3;
+        vel2_x -= csin(angle) >> 3;
+        vel2_y += ccos(angle) >> 3;
     }
     if (!(pad2->btn & PAD_LEFT)) {
-        angle -= 32;
+        angle2 -= 32;
     } else if (!(pad2->btn & PAD_RIGHT)) {
-        angle += 32;
+        angle2 += 32;
     }
 
-    // Fire bullet with Triangle
-    if (!(pad2->btn & PAD_TRIANGLE)) {
+    // Player 1 fires with pad (pad 1)
+    if (!(pad->btn & PAD_TRIANGLE)) {
         for (i = 0; i < MAX_BULLETS; i++) {
             if (!bullets[i].active) {
                 int bx = player_tri[0].vx << 12;
@@ -776,19 +776,19 @@ void updateGameCoop(PADTYPE *pad, PADTYPE *pad2) {
         }
     }
 
-    // Fire bullet with Triangle
-    if (!(pad->btn & PAD_TRIANGLE)) {
+    // Player 2 fires with pad2 (pad 2)
+    if (!(pad2->btn & PAD_TRIANGLE)) {
         for (i = 0; i < MAX_BULLETS; i++) {
             if (!bullets[i].active) {
                 int bx = player2_tri[0].vx << 12;
                 int by = player2_tri[0].vy << 12;
 
                 int speed = 3 << 12;
-                int bvx = (csin(angle) * speed) >> 12;
-                int bvy = -(ccos(angle) * speed) >> 12;
+                int bvx = (csin(angle2) * speed) >> 12;
+                int bvy = -(ccos(angle2) * speed) >> 12;
 
-                bullets[i].x = pos_x + bx;
-                bullets[i].y = pos_y + by;
+                bullets[i].x = pos2_x + bx;
+                bullets[i].y = pos2_y + by;
                 bullets[i].vx = bvx;
                 bullets[i].vy = bvy;
                 bullets[i].active = 1;
@@ -872,14 +872,14 @@ void updateGameCoop(PADTYPE *pad, PADTYPE *pad2) {
     // Rotate and draw player triangle
     SVECTOR v2[3];
     for (i = 0; i < 3; i++) {
-        v2[i].vx = (((player2_tri[i].vx * ccos(angle)) -
-                    (player2_tri[i].vy * csin(angle))) >>
+        v2[i].vx = (((player2_tri[i].vx * ccos(angle2)) -
+                    (player2_tri[i].vy * csin(angle2))) >>
                    12) +
-                  (pos_x >> 12);
-        v2[i].vy = (((player2_tri[i].vy * ccos(angle)) +
-                    (player2_tri[i].vx * csin(angle))) >>
+                  (pos2_x >> 12);
+        v2[i].vy = (((player2_tri[i].vy * ccos(angle2)) +
+                    (player2_tri[i].vx * csin(angle2))) >>
                    12) +
-                  (pos_y >> 12);
+                  (pos2_y >> 12);
     }
 
     POLY_F3 *tri2 = (POLY_F3 *)nextpri;
@@ -1143,6 +1143,13 @@ void updateTitleScreen(PADTYPE *pad) {
     // Handle input
     static int prev_buttons = 0;
 
+    static int inputCooldown = 30; // 0.5 seconds at 60fps
+    if (inputCooldown > 0) {
+        inputCooldown--;
+        prev_buttons = pad->btn;
+        return;
+    }
+
     if ((pad->btn & PAD_DOWN) && !(prev_buttons & PAD_DOWN)) {
         selectedOption = (selectedOption + 1) % MENU_OPTION_COUNT;
     } else if ((pad->btn & PAD_UP) && !(prev_buttons & PAD_UP)) {
@@ -1169,7 +1176,7 @@ void updateTitleScreen(PADTYPE *pad) {
                 explosions[i].active = 0;
 
             gameState = STATE_PLAYING;
-        }else if (selectedOption == MENU_2_PLAYER) {
+        } else if (selectedOption == MENU_2_PLAYER) {
             // Start game
             alive = 1;
             score = 0;
