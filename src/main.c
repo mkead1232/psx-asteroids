@@ -1203,10 +1203,8 @@ void updateTitleScreen(PADTYPE *pad) {
 
             gameState = STATE_COOP;
         }
-    } 
-
-    centerPrint("2P INDEV");
-
+    }
+    
     prev_buttons = pad->btn;
 
     drawStars();
